@@ -1,1 +1,1 @@
-# openehr-prototyping
+# EHR-prototyping
