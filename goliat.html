@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EHR experiment one-page housekeeping-app</title>	
+	<!-- Preferred api/framework http://vanilla-js.com/ but the following CDN imports will do for now :) -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<!-- and some custom code to talk to a specific openEHR backend, in this case Ehrscape -->
+	<script src="program.js"></script>
+	<style>
+			body {
+			position: relative; 
+			}	
+			.affix {
+				top:0;
+				width: 100%;
+				z-index: 9999 !important;
+			}
+			.navbar {
+				margin-bottom: 0px;
+			}
+			.affix ~ .container-fluid {
+				position: relative;
+				top: 50px;
+			}
+			.panel {
+				padding: 0px 0px;
+			}
+			.panel .inner {
+				background-color: #fff;
+			}
+		</style>
+</head>
+<body>
+		<div class="container-fluid" style="background-color:#337ab7;color:#fff;height:100px;">
+			<h1>EHR experiments, setup and configuration</h1>
+			<p>Region Östergötland Ehrscape housekeeping one-page app</p>	
+		</div>
+
+		<nav class="navbar navbar-inverse" data-spy="affix" data-offset-top="97">
+				<div class="container-fluid">
+				  <!-- Brand and toggle get grouped for better mobile display -->
+				  <div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+					  <span class="sr-only">Toggle navigation</span>
+					  <span class="icon-bar"></span>
+					  <span class="icon-bar"></span>
+					  <span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#">RÖ</a>
+				  </div>
+			  
+				  <!-- Collect the nav links, forms, and other content for toggling -->
+				  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+					  <li class="active"><a href="#">Top</a></li>
+					  <li><a href="#query">Query</a></li>
+					  <li><a href="#createPatient">Create patients</a></li>
+					  <li><a href="#listPatients">List patients</a></li>
+					  <li><a href="#listForms">List forms</a></li>
+					  <li><a href="#end">End of page</a></li>
+					  <!-- li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+						  <li><a href="#">Action</a></li>
+						  <li><a href="#">Another action</a></li>
+						  <li><a href="#">Something else here</a></li>
+						  <li role="separator" class="divider"></li>
+						  <li><a href="#">Separated link</a></li>
+						  <li role="separator" class="divider"></li>
+						  <li><a href="#">One more separated link</a></li>
+						</ul>
+					  </li -->
+					</ul>
+					<ul class="nav navbar-nav navbar-right"><li>?</li></ul>
+				  </div><!-- /.navbar-collapse -->
+				</div><!-- /.container-fluid -->
+			  </nav>
+
+<div class="container">
+	<div id="Config" class="page-header"><h2>Login &amp; configuration</h2></div>
+	<div class="row">  
+
+		<div class="col-md-6 panel panel-default">
+			<div class="panel-heading"><h3 class="panel-title">Shared context</h3></div>
+			<form class="panel-body">
+				<div class="form-group"><label>Selected EHR</label><input id="ehr-id-field" type="text" name="session" size="35" placeholder="EHR ID goes here, e.g. from select-button in 'List patients' below" class="form-control"></div>
+				<div class="form-group"><label>Comitter name</label><input type="text" id="committer" value="Dr. T. Esting" class="form-control"></div>
+				<div class="form-group">
+					<label>Selected Form</label>
+					<input id="form-id-field" type="text" name="session" size="35" placeholder="Form ID goes here, e.g. from select-button in 'List forms' below" class="form-control">
+					<input id="form-version-field" type="text" name="session" size="5" placeholder="version" class="form-control"></div>
+					<input class="btn btn-primary" type="button" id="open-form-button-ro" value="open selected form for EHR in RÖ renderer">
+					<input class="btn btn-primary" type="button" id="open-form-button-2" value="open selected form for EHR in renderer 2">						
+				</form>
+		</div>
+
+		<div class="col-md-5 col-md-offset-1">
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Ehrscape login credentials</h3></div>
+				<form class="panel-body">
+				<div class="form-group">
+					<label>username</label><input type="text" id="username" name="username" value="lio.se1" class="form-control">
+					<small id="passwordHelpInline" class="text-muted">The pre-filled user (lio.se1) is a limited read-only-account.<br/>Change to another user/password and click "Login" to get more permissions</small>
+				</div>
+				<div class="form-group"><label>password</label> <input type="password" id="password" name="password" value="lio.se123" class="form-control"></div>
+				<input class="btn btn-primary" type="button" id="loginButton" value="Login"> (Shows session ID below)<br/>
+					<input id="sessionfield" type="text" name="session" size="35" value="Space for Session ID">		
+				</form>
+			</div>
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Save/get defaults in browser cookie</h3></div>
+				<form class="panel-body">
+				<label for="slotNumber">Select list:</label>
+				<select id="slotNumber" class="form-control" name="slotNumber">
+					<option value="1">Default user/pw slot</option>
+					<option value="2">Slot #2</option>
+					<option value="3">Slot #3</option>
+					<option value="3">Slot #4</option>
+				</select>
+				<input class="btn btn-primary" type="button" id="saveSlotButton" value="Save">
+				<input class="btn btn-primary" type="button" id="fetchSlotButton" value="Fetch">
+				</form>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Single button -->
+
+
+
+	</div>
+
+	<div id="query" class="page-header"><h2>Query</h2></div>
+	<div class="row">
+		<div class="col-md-6">		
+		<p>Query</p> 
+		<form target="_blank" id="queryForm">
+			<textarea id="queryResponse" rows="5" cols="50" class="form-control" placeholder="Enter query here here or pick from example list..." ></textarea>				
+			<input type="submit" class="btn btn-primary btn-block" value="query">
+		</form></br>
+		</div>
+		<div class="col-md-6">
+		<p>Response</p>  
+		<textarea id="queryResponse" rows="5" cols="50" class="form-control" placeholder="Response comes here..." ></textarea>
+		</div>
+	</div>
+
+
+	<div id="createPatient" class="page-header"><h2>Create Patient(s)</h2></div>
+	<div class="row">
+		<div class="col-md-6">		
+		<p>Genrerate fictive Swedish patients using https://fejka.nu/ opens in a separate result window/tab. </p> 
+		<form target="_blank" id="fejkaForm" action="https://fejka.nu/">
+			<p>Number of identities to generate: <input type="text" name="num" value="1" size="3"><br/>
+			Minimum age: <input type="text" name="age_min" type="number" value="20" size="3">
+			Maximum age: <input type="text" name="age_max" type="number" value="102" size="3"><br/>
+			Gender: 
+			<label class="radio-inline"><input type="radio" name="gender" value="man">Male</label>
+			<label class="radio-inline"><input type="radio" name="gender" value="woman">Female</label>
+			<label class="radio-inline"><input type="radio" name="gender" value="" checked>Random</label><br/></p>
+			<input type="hidden" name="json" value="1">		
+			<input type="submit" class="btn btn-primary btn-block" value="Generate fictive identities in new window/tab">
+		</form></br>
+		</div>
+		<div class="col-md-6">
+		Copy the fictive identities from the new window/tab that was opened, into the field below<br/> 
+		<textarea id="fictiveData" rows="5" cols="50" class="form-control" placeholder="Copy the fictive identities to here..." ></textarea><br/>
+		Tags: <input type="text" id="tagField" value="GOLIaT"> (space-separate if multiple)
+		<input type="button" class="btn btn-primary btn-block" id="newFictivePatient" value="Use data above to create patient + mark them with tag(s) above">
+		</div>
+	</div>
+	
+	<div id="listPatients" class="row"><div class="col-sm-12">
+		<h2>List Patients</h2>
+		<input type="button" class="btn btn-primary" id="listPatients" value="List patients">
+		<table class="table table-condensed table-hover sortable" id="patientTable" >
+				<thead>
+					<th>Personnummer</th><th>First Name(s)</th><th>Last Name(s)</th>
+					<th>Gender</th><th>Ehrscape ID</th><th>ehr_id</th><th>commands</th><th>Tags</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+		</table>
+		<div id="patientlist"></div>
+	</div></div>
+	<div class="row" id="listForms"><div class="col-sm-12">
+			<h2>List Forms</h2>
+			<input type="button" class="btn btn-primary" id="listForms" value="List forms">
+			<table class="table table-condensed table-hover sortable" id="formTable" >
+					<thead>
+						<th>name</th><th>version</th><th>templateId</th>
+						<th>category</th><th>commands</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+			</table>
+			<div id="formList"></div>
+		</div></div>
+	<div class="row">
+<h3 id="header">Result:</h3>
+<div id="result">Result comes here</div>
+<div id="demo">demo comes here</div>
+<div id="end"></div>
+
+</div>
+
+</div> <!-- end of conotainer-fluid -->
+
+<script>
+
+function setCookie(key, value) {
+	console.log("setCookie", key, value)
+	var expires = new Date();
+	expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
+	document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+}
+
+function getCookie(key) {
+	var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+	console.log("getCookie", key, keyValue ? keyValue[2] : null)
+	return keyValue ? keyValue[2] : null;
+}
+
+ function setEHR(obj, ehrid){
+	 console.log(ehrid);
+	 document.getElementById("ehr-id-field").value = ehrid;
+ }
+
+ function setForm(obj, formID, formVersion){
+	 console.log(obj, formID, formVersion);
+	 document.getElementById("form-id-field").value = formID;
+	 document.getElementById("form-version-field").value = formVersion;
+ }
+
+document.onreadystatechange = function () {
+  if (document.readyState === "complete") {
+    initApplication();
+  }
+}
+	
+// function myFunction() {document.getElementById("demo").style.color = "red";}	
+
+function initApplication() {	
+
+	// console.log("un2", document.getElementById("username").value);
+
+	fetchUserFromCookie(); // Fetch first slot
+
+	$("#loginButton").click(function() {
+		var sessid = EHRhelper.getSessionId(
+			document.getElementById("username").value,
+			document.getElementById("password").value);
+		document.getElementById("sessionfield").value = sessid;
+	});
+
+	$("#saveSlotButton").click(function() {
+		var nr = $("#slotNumber").val();
+		//console.log("save",nr,document.getElementById("username").value);
+		setCookie("username"+nr, $("#username").val());
+		setCookie("password"+nr, $("#password").val());
+
+	});
+
+	function fetchUserFromCookie() {
+		var nr = $("#slotNumber").val();
+		console.log("load",nr, getCookie("username"+nr));
+		usr = getCookie("username"+nr)
+		pwd = getCookie("password"+nr)
+		if (usr) $("#username").val(usr); 
+		if (pwd) $("#password").val(pwd); 
+	}
+
+	$("#fetchSlotButton").click(fetchUserFromCookie);
+
+	function patientListCallback(resultArray){
+		console.log("patientListCallback resultArray",resultArray)
+		var seenTags = {};
+
+		resultArray.forEach(function(element) 
+		{
+			var row = $('#patientTable > tbody:last-child').append(
+				'<tr class="'+element.tags+'">'+
+				'<td>'+element.Personnummer+'</td>'+
+				'<td>'+element.firstNames+'</td>'+
+				'<td>'+element.lastNames+'</td>'+
+				'<td>'+element.gender+'</td>'+
+				'<td>'+element.id+'</td>'+
+				'<td>'+element.ehrId+'</td><td><input type="button"  value="select" onclick="setEHR(this,\''+element.ehrId+'\');"></td>'+
+				'<td>'+element.tags+'</td>'+
+				'</tr>');
+			if (element.tags) {	
+			tagArray = element.tags.split(' ');
+			tagArray.forEach(function(element) {
+				seen = seenTags[element];
+				if (!seen)
+				{
+					seenTags[element] = 1;
+				} 
+				else
+				{
+					seenTags[element]=seen+1;
+				}
+			});
+		}
+		});
+		console.log("seenTags", seenTags);
+
+		var tagSelecors = '<div id="tag-selectors">Show rows tagged with: <div> '+
+			'<label class="btn"><input type="checkbox" class="tagbox" name="undefined" checked> undefined</label> '
+		seenTagsArray = Object.keys(seenTags)
+		seenTagsArray.forEach(function(element) {
+			tagSelecors = tagSelecors+'<label class="btn"><input type="checkbox" class="tagbox" name="'+element+'" checked>'+element+' <span class="badge">'+seenTags[element]+'</span></label>'	
+		});
+		tagSelecors = tagSelecors+'</div></div>'
+
+		$('#tag-selectors').remove(); // remove old selectors if present
+		$('#patientTable').before(tagSelecors) // add new selectors
+		$('.tagbox').change(function() {
+			var disp = 'none';
+			if (this.checked) disp = 'table-row';
+			var elementArray = document.getElementsByClassName(this.name)
+			for (var i = 0; i < elementArray.length; i ++) {
+    			elementArray[i].style.display = disp;
+			}
+    });
+
+	} 
+
+	$("#listPatients").click(function() {
+		var list = EHRhelper.getAllPatients(patientListCallback)
+		// document.getElementById("sessionfield").value = sessid;
+	});
+
+
+// -----------------------------------------------
+
+function formListCallback(resultArray){
+		console.log("resultArray",resultArray)
+
+		resultArray.forEach(function(element) 
+		{
+			var row = $('#formTable > tbody:last-child').append(
+				'<tr>'+
+				'<td>'+element.name+'</td>'+
+				'<td>'+element.version+'</td>'+
+				'<td>'+element.templateId+'</td>'+
+				'<td>'+element.category+'</td>'+
+				'<td><input type="button"  value="select" onclick="setForm(this,\''+element.name+'\',\''+element.version+'\')"></td>'+
+				'</tr>');
+		});
+	} 
+
+	$("#listForms").click(function() {
+		var list = EHRhelper.listForms(formListCallback)
+	});
+
+// -----------------------------------------------
+
+	function constructEHRScapePatient(fictivejson, tags){
+		console.log(fictivejson);
+	  //EHRhelper.CreatePatient(firstname, lastname, gender, dateOfBirth, personnummer)
+	    var genderInEHR = "FEMALE";
+		if (fictivejson.gender == "man") genderInEHR = "MALE";
+	 	fullPNR = fictivejson.pnr_full;
+		dateOfBirth = ""  + fullPNR.substring(0,4) + "-" + fullPNR.substring(4,6) + "-" + fullPNR.substring(6,8) + "T00:00:00Z"
+		EHRhelper.CreatePatient(fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)		
+		console.log("CreatePatient",fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)
+	}
+
+	$("#newFictivePatient").click(function() {
+		var fictiveData = JSON.parse(document.getElementById("fictiveData").value.trim());
+		var tags = document.getElementById("tagField").value.trim();		
+		if (fictiveData[0]) //Check if it is an array TODO: check for less ugly array detection
+		{
+			//array so loop
+			fictiveData.forEach(function(element) {constructEHRScapePatient(element, tags);});
+		} else {
+			// single id (no array)
+			constructEHRScapePatient(fictiveData);
+		}
+		//console.log(fictiveData[0], fictiveData);
+	});
+	// form-id-field form-version-field
+	$("#open-form-button-ro").click(function() {
+		url = 'http://goliatdemoutvtest.lio.se/Utredning/ViewForm?'+
+		//'EHRID='+$("#ehr-id-field").value+
+		'EHRID='+document.getElementById("ehr-id-field").value.trim()+
+		'&formName='+document.getElementById("form-id-field").value.trim()+
+		'&formVersion='+document.getElementById("form-version-field").value.trim();		
+		console.log(url)
+		var win = window.open(url, '_blank');
+  		win.focus();
+	});
+
+	$("#open-form-button-2").click(function() {		
+		//EHRhelper.getForm(ehrId, name, version, callbackFn)
+		EHRhelper.getForm(document.getElementById("ehr-id-field").value.trim(), 
+			document.getElementById("form-id-field").value.trim(), 
+			document.getElementById("form-version-field").value.trim(), 
+			null)
+	});
+	
+
+	//console.log("End of inline script");
+} 
+</script>
+
+</body>
+</html>
