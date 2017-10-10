@@ -36,8 +36,19 @@
 </head>
 <body>
 		<div class="container-fluid" style="background-color:#337ab7;color:#fff;height:100px;">
-			<h1>EHR experiments, setup and configuration</h1>
-			<p>Region Östergötland Ehrscape housekeeping one-page app</p>	
+		<div class="row">  				
+
+			<div class="col-md-3">
+				<p id="loginStatusLine">Not logged in</p>	
+			</div>
+			<div class="col-md-6">
+				<h3 style="text-align:center">EHR experiments, setup and configuration</h2>
+				<p style="text-align:center">Region Östergötland Ehrscape housekeeping one-page app</p>	
+			</div>
+			<div class="col-md-3">
+				<p id="patientInfo" style="text-align:right">TODO: add patientInfo here</p>	
+			</div>
+		</div>
 		</div>
 
 		<nav class="navbar navbar-inverse" data-spy="affix" data-offset-top="97">
@@ -84,21 +95,7 @@
 	<div id="Config" class="page-header"><h2>Login &amp; configuration</h2></div>
 	<div class="row">  
 
-		<div class="col-md-6 panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Shared context</h3></div>
-			<form class="panel-body">
-				<div class="form-group"><label>Selected EHR</label><input id="ehr-id-field" type="text" name="session" size="35" placeholder="EHR ID goes here, e.g. from select-button in 'List patients' below" class="form-control"></div>
-				<div class="form-group"><label>Comitter name</label><input type="text" id="committer" value="Dr. T. Esting" class="form-control"></div>
-				<div class="form-group">
-					<label>Selected Form</label>
-					<input id="form-id-field" type="text" name="session" size="35" placeholder="Form ID goes here, e.g. from select-button in 'List forms' below" class="form-control">
-					<input id="form-version-field" type="text" name="session" size="5" placeholder="version" class="form-control"></div>
-					<input class="btn btn-primary" type="button" id="open-form-button-ro" value="open selected form for EHR in RÖ renderer">
-					<input class="btn btn-primary" type="button" id="open-form-button-2" value="open selected form for EHR in renderer 2">						
-				</form>
-		</div>
-
-		<div class="col-md-5 col-md-offset-1">
+		<div class="col-md-5">
 			<div class="panel panel-default">
 				<div class="panel-heading"><h3 class="panel-title">Ehrscape login credentials</h3></div>
 				<form class="panel-body">
@@ -107,8 +104,8 @@
 					<small id="passwordHelpInline" class="text-muted">The pre-filled user (lio.se1) is a limited read-only-account.<br/>Change to another user/password and click "Login" to get more permissions</small>
 				</div>
 				<div class="form-group"><label>password</label> <input type="password" id="password" name="password" value="lio.se123" class="form-control"></div>
-				<input class="btn btn-primary" type="button" id="loginButton" value="Login"> (Shows session ID below)<br/>
-					<input id="sessionfield" type="text" name="session" size="35" value="Space for Session ID">		
+				<input class="btn btn-primary" type="button" id="loginButton" value="Login"><br/>
+				<small class="text-muted">Session info will show on top of page when logged in</small>	
 				</form>
 			</div>
 			<div class="panel panel-default">
@@ -127,13 +124,23 @@
 				</div>
 			</div>
 
+			<div class="col-md-6 col-md-offset-1 panel panel-default">
+					<div class="panel-heading"><h3 class="panel-title">Shared context</h3></div>
+					<form class="panel-body">
+						<div class="form-group"><label>Selected EHR</label><input id="ehr-id-field" type="text" size="35" placeholder="EHR ID goes here, e.g. from select-button in 'List patients' below" class="form-control"></div>
+						<div class="form-group"><label>Comitter name</label><input type="text" id="committer" value="Dr. T. Esting" class="form-control"></div>
+						<div class="form-group">
+							<label>Selected Form</label>
+							<input id="form-id-field" type="text"  size="35" placeholder="Form ID goes here, e.g. from select-button in 'List forms' below" class="form-control">
+							<input id="form-version-field" type="text" size="5" placeholder="version" class="form-control"></div>
+							<input class="btn btn-primary" type="button" id="open-form-button-ro" value="open selected form for EHR in RÖ renderer">
+							<input class="btn btn-primary" type="button" id="open-form-button-2" value="open selected form for EHR in renderer 2">						
+						</form>
+				</div>
+
 		</div>
 
 		<!-- Single button -->
-
-
-
-	</div>
 
 	<div id="query" class="page-header"><h2>Query</h2></div>
 	<div class="row">
@@ -177,21 +184,21 @@
 	
 	<div id="listPatients" class="row"><div class="col-sm-12">
 		<h2>List Patients</h2>
-		<input type="button" class="btn btn-primary" id="listPatients" value="List patients">
+		<input type="button" class="btn btn-primary" id="listPatientsButton" value="List patients">
 		<table class="table table-condensed table-hover sortable" id="patientTable" >
 				<thead>
 					<th>Personnummer</th><th>First Name(s)</th><th>Last Name(s)</th>
 					<th>Gender</th><th>Ehrscape ID</th><th>ehr_id</th><th>commands</th><th>Tags</th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody id="patientTableBody">
 				</tbody>
 		</table>
 		<div id="patientlist"></div>
 	</div></div>
 	<div class="row" id="listForms"><div class="col-sm-12">
 			<h2>List Forms</h2>
-			<input type="button" class="btn btn-primary" id="listForms" value="List forms">
+			<input type="button" class="btn btn-primary" id="listFormsButton" value="List forms">
 			<table class="table table-condensed table-hover sortable" id="formTable" >
 					<thead>
 						<th>name</th><th>version</th><th>templateId</th>
@@ -211,9 +218,11 @@
 
 </div>
 
-</div> <!-- end of conotainer-fluid -->
+</div> <!-- end of container-fluid -->
 
 <script>
+
+var sessionId = null;
 
 function setCookie(key, value) {
 	console.log("setCookie", key, value)
@@ -239,6 +248,13 @@ function getCookie(key) {
 	 document.getElementById("form-version-field").value = formVersion;
  }
 
+function logout() {
+	EHRhelper.logout(sessionId, function(res){
+		document.getElementById("loginStatusLine").innerHTML = "Not logged in";
+	});
+}
+
+
 document.onreadystatechange = function () {
   if (document.readyState === "complete") {
     initApplication();
@@ -254,10 +270,18 @@ function initApplication() {
 	fetchUserFromCookie(); // Fetch first slot
 
 	$("#loginButton").click(function() {
-		var sessid = EHRhelper.getSessionId(
-			document.getElementById("username").value,
-			document.getElementById("password").value);
-		document.getElementById("sessionfield").value = sessid;
+		//login(user, pass, successFn)
+		usr =	document.getElementById("username").value;
+		EHRhelper.login(usr, document.getElementById("password").value,
+			function(res){
+				sessionId = res.sessionId;
+				EHRhelper.sessionId = sessionId;
+				document.getElementById("loginStatusLine").innerHTML = "Logged in as "+usr+
+				' <a class="btn btn-default btn-xs" href="#" onclick="logout();return false;">Log out</a>'+
+				'<br><small>Session ID: '+sessionId+'</small>';
+				document.body.scrollTop = document.documentElement.scrollTop = 0;
+			}
+		);	
 	});
 
 	$("#saveSlotButton").click(function() {
@@ -283,18 +307,21 @@ function initApplication() {
 		console.log("patientListCallback resultArray",resultArray)
 		var seenTags = {};
 
+		document.getElementById("patientTableBody").innerHTML = "";
 		resultArray.forEach(function(element) 
 		{
 			var row = $('#patientTable > tbody:last-child').append(
 				'<tr class="'+element.tags+'">'+
-				'<td>'+element.Personnummer+'</td>'+
-				'<td>'+element.firstNames+'</td>'+
-				'<td>'+element.lastNames+'</td>'+
-				'<td>'+element.gender+'</td>'+
-				'<td>'+element.id+'</td>'+
-				'<td>'+element.ehrId+'</td><td><input type="button"  value="select" onclick="setEHR(this,\''+element.ehrId+'\');"></td>'+
-				'<td>'+element.tags+'</td>'+
+					'<td>'+element.Personnummer+'</td>'+
+					'<td>'+element.firstNames+'</td>'+
+					'<td>'+element.lastNames+'</td>'+
+					'<td>'+element.gender+'</td>'+
+					'<td>'+element.id+'</td>'+
+					'<td>'+element.ehrId+'</td>'+
+					'<td><input type="button" value="select" onclick="setEHR(this,\''+element.ehrId+'\');"></td>'+
+					'<td>'+element.tags+'</td>'+
 				'</tr>');
+								//'<input type="button" disabled="true" value="delete" onclick="deleteEHR(this,\''+element.id+'\');">'+
 			if (element.tags) {	
 			tagArray = element.tags.split(' ');
 			tagArray.forEach(function(element) {
@@ -333,9 +360,8 @@ function initApplication() {
 
 	} 
 
-	$("#listPatients").click(function() {
-		var list = EHRhelper.getAllPatients(patientListCallback)
-		// document.getElementById("sessionfield").value = sessid;
+	$("#listPatientsButton").click(function() {
+		var list = EHRhelper.listPatients(sessionId, patientListCallback)
 	});
 
 
@@ -357,21 +383,21 @@ function formListCallback(resultArray){
 		});
 	} 
 
-	$("#listForms").click(function() {
-		var list = EHRhelper.listForms(formListCallback)
+	$("#listFormsButton").click(function() {
+		var list = EHRhelper.listForms(sessionId, formListCallback)
 	});
 
 // -----------------------------------------------
 
 	function constructEHRScapePatient(fictivejson, tags){
-		console.log(fictivejson);
+		console.log('constructEHRScapePatient',fictivejson, tags);
 	  //EHRhelper.CreatePatient(firstname, lastname, gender, dateOfBirth, personnummer)
 	    var genderInEHR = "FEMALE";
 		if (fictivejson.gender == "man") genderInEHR = "MALE";
 	 	fullPNR = fictivejson.pnr_full;
 		dateOfBirth = ""  + fullPNR.substring(0,4) + "-" + fullPNR.substring(4,6) + "-" + fullPNR.substring(6,8) + "T00:00:00Z"
-		EHRhelper.CreatePatient(fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)		
-		console.log("CreatePatient",fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)
+		EHRhelper.CreatePatient(sessionId, fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)		
+		console.log("CreatePatient",sessionId,fictivejson.fname, fictivejson.lname, genderInEHR, dateOfBirth, fullPNR, tags)
 	}
 
 	$("#newFictivePatient").click(function() {
@@ -383,7 +409,7 @@ function formListCallback(resultArray){
 			fictiveData.forEach(function(element) {constructEHRScapePatient(element, tags);});
 		} else {
 			// single id (no array)
-			constructEHRScapePatient(fictiveData);
+			constructEHRScapePatient(fictiveData, tags);
 		}
 		//console.log(fictiveData[0], fictiveData);
 	});
