@@ -3,13 +3,21 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EHR experiment one-page housekeeping-app</title>	
+	<title>EHR experiment one-page housekeeping-app</title>	
+	
 	<!-- Preferred api/framework http://vanilla-js.com/ but the following CDN imports will do for now :) -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<!-- Datatables from https://datatables.net/ -->
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.css"/>
+		<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+
 	<!-- and some custom code to talk to a specific openEHR backend, in this case Ehrscape -->
 	<script src="program.js"></script>
+
+	<script src="aql-examples.js"></script>
+
 	<style>
 			body {
 			position: relative; 
@@ -21,6 +29,7 @@
 			}
 			.navbar {
 				margin-bottom: 0px;
+				z-index: 9998
 			}
 			.affix ~ .container-fluid {
 				position: relative;
@@ -105,11 +114,11 @@
 				</div>
 				<div class="form-group"><label>password</label> <input type="password" id="password" name="password" value="lio.se123" class="form-control"></div>
 				<input class="btn btn-primary" type="button" id="loginButton" value="Login"><br/>
-				<small class="text-muted">Session info will show on top of page when logged in</small>	
+				<small class="text-muted">User + session info will show on top of page when logged in</small>	
 				</form>
 			</div>
 			<div class="panel panel-default">
-				<div class="panel-heading"><h3 class="panel-title">Save/get defaults in browser cookie</h3></div>
+				<div class="panel-heading"><h3 class="panel-title">Save/fetch defaults in web-browser cookie</h3></div>
 				<form class="panel-body">
 				<label for="slotNumber">Select list:</label>
 				<select id="slotNumber" class="form-control" name="slotNumber">
@@ -146,14 +155,20 @@
 	<div class="row">
 		<div class="col-md-6">		
 		<p>Query</p> 
-		<form target="_blank" id="queryForm">
-			<textarea id="queryResponse" rows="5" cols="50" class="form-control" placeholder="Enter query here here or pick from example list..." ></textarea>				
-			<input type="submit" class="btn btn-primary btn-block" value="query">
+		<form id="queryForm">
+			<label for="queryExample">Select list:</label>
+			<select id="queryExample" class="form-control">
+					<option id="noQueryExampleChosen" value="">No query example chosen</option>
+			</select>
+			<textarea id="AQLqueryField" rows="5" cols="50" class="form-control" placeholder="Enter query here here or pick from example list above..." ></textarea>				
+			<input id="AQLqueryButton" type="button" class="btn btn-primary btn-block" value="query">
+			<small>If query contains <code>$ehrUid</code>, then it will be replaced by currently selected patient's EHR id (if any).</small>
 		</form></br>
 		</div>
 		<div class="col-md-6">
 		<p>Response</p>  
 		<textarea id="queryResponse" rows="5" cols="50" class="form-control" placeholder="Response comes here..." ></textarea>
+		<table class="table table-condensed table-hover sortable" id="aqlResultTable" ></table>
 		</div>
 	</div>
 
@@ -224,19 +239,6 @@
 
 var sessionId = null;
 
-function setCookie(key, value) {
-	console.log("setCookie", key, value)
-	var expires = new Date();
-	expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
-	document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
-}
-
-function getCookie(key) {
-	var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
-	console.log("getCookie", key, keyValue ? keyValue[2] : null)
-	return keyValue ? keyValue[2] : null;
-}
-
  function setEHR(obj, ehrid){
 	 console.log(ehrid);
 	 document.getElementById("ehr-id-field").value = ehrid;
@@ -265,9 +267,58 @@ document.onreadystatechange = function () {
 
 function initApplication() {	
 
-	// console.log("un2", document.getElementById("username").value);
-
 	fetchUserFromCookie(); // Fetch first slot
+
+	//console.log("Object.keys", Object.keys(queryMap));
+
+// ----------- AQL -------------
+
+	var optionList = "";
+	for (var k in queryMap) {
+		// <option value="BP+Pulse">BP+Pulse</option>
+		optionList = optionList+'<option value="'+k+'">'+k+'</option>';
+	}
+	$(optionList).insertAfter("#noQueryExampleChosen");
+
+	$("#queryExample").change(
+		function() {
+			var queryName = $("#queryExample").val();
+			if (queryName) {
+				document.getElementById("AQLqueryField").value = queryMap[queryName]
+			}
+		}
+	);
+	
+	$("#AQLqueryButton").click(function(){
+		document.getElementById("AQLqueryField").value	
+		EHRhelper.queryAQL(document.getElementById("AQLqueryField").value,
+		document.getElementById("ehr-id-field").value.trim(),
+		function(res) {
+			console.log(res);
+			document.getElementById("queryResponse").value = JSON.stringify(res.resultSet);
+			//var table = $('#aqlResultTable').DataTable({"data":res.resultSet});
+			//table.clear();
+			//table.rows.add(res.resultSet).draw();
+		})
+	});
+
+	/*$('#aqlResultTable').dataTable(
+		{
+			"columns": [
+				{ "data": "name" },
+				{ "data": "version" },
+				{ "data": "templateId" },
+				{ "data": "category" },
+			],  
+			"columnDefs": [ {
+				"targets": [ 4 ],
+				"data": function ( row, type, val, meta ){ return type + row.version}, 
+				"render": function ( data, type, row, meta ) {return '<input type="button" value="select" onclick="setForm(this,\''+row.name+'\',\''+row.version+'\')">'}
+			} ]
+		} 
+	);*/
+
+// ------------- Logins ------------------------
 
 	$("#loginButton").click(function() {
 		//login(user, pass, successFn)
@@ -302,6 +353,8 @@ function initApplication() {
 	}
 
 	$("#fetchSlotButton").click(fetchUserFromCookie);
+
+// ----------- Patient list -----------------
 
 	function patientListCallback(resultArray){
 		console.log("patientListCallback resultArray",resultArray)
@@ -356,7 +409,10 @@ function initApplication() {
 			for (var i = 0; i < elementArray.length; i ++) {
     			elementArray[i].style.display = disp;
 			}
-    });
+
+		console.log("end of initApplication()");
+			
+    }); // end of initApplication()
 
 	} 
 
@@ -365,27 +421,37 @@ function initApplication() {
 	});
 
 
-// -----------------------------------------------
-
-function formListCallback(resultArray){
-		console.log("resultArray",resultArray)
-
-		resultArray.forEach(function(element) 
-		{
-			var row = $('#formTable > tbody:last-child').append(
-				'<tr>'+
-				'<td>'+element.name+'</td>'+
-				'<td>'+element.version+'</td>'+
-				'<td>'+element.templateId+'</td>'+
-				'<td>'+element.category+'</td>'+
-				'<td><input type="button"  value="select" onclick="setForm(this,\''+element.name+'\',\''+element.version+'\')"></td>'+
-				'</tr>');
-		});
-	} 
+// -------------- Form List ---------------------------------
 
 	$("#listFormsButton").click(function() {
 		var list = EHRhelper.listForms(sessionId, formListCallback)
 	});
+
+	function formListCallback(resultArray){
+		//console.log("resultArray",resultArray);
+		var table = $('#formTable').DataTable();
+		table.clear();
+		table.rows.add(resultArray).draw();
+	} ;
+
+	$('#formTable').dataTable( 
+		{
+			//"data": resultArray,
+			"columns": [
+				{ "data": "name" },
+				{ "data": "version" },
+				{ "data": "templateId" },
+				{ "data": "category" },
+				//{ "data": "createdTimestamp" }
+			],  
+			"columnDefs": [ {
+				"targets": [ 4 ],
+				"data": function ( row, type, val, meta ){ return type + row.version}, 
+				//"defaultContent": "Click to edit"
+				"render": function ( data, type, row, meta ) {return '<input type="button" value="select" onclick="setForm(this,\''+row.name+'\',\''+row.version+'\')">'}
+			} ]
+		}
+	);
 
 // -----------------------------------------------
 
@@ -414,6 +480,8 @@ function formListCallback(resultArray){
 		//console.log(fictiveData[0], fictiveData);
 	});
 	// form-id-field form-version-field
+
+
 	$("#open-form-button-ro").click(function() {
 		url = 'http://goliatdemoutvtest.lio.se/Utredning/ViewForm?'+
 		//'EHRID='+$("#ehr-id-field").value+
@@ -432,9 +500,8 @@ function formListCallback(resultArray){
 			document.getElementById("form-version-field").value.trim(), 
 			null)
 	});
-	
 
-	//console.log("End of inline script");
+	console.log("End of html inline script");
 } 
 </script>
 

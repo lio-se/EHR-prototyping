@@ -1,6 +1,19 @@
 var namespace = {};
 window.EHRhelper = namespace;
 
+function setCookie(key, value) {
+	console.log("setCookie", key, value);
+	var expires = new Date();
+	expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); //1000 days
+	document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+}
+
+function getCookie(key) {
+	var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+	console.log("getCookie", key, keyValue ? keyValue[2] : null);
+	return keyValue ? keyValue[2] : null;
+}
+
 
 $(document).ready(function() {
 
@@ -53,7 +66,10 @@ function checkSession(sessID, successFn, failFn) {
 
 }
 
+
+
 namespace.logout = function(sessID, successFn) {
+	if (!sessID) sessID = namespace.sessionId;
     $.ajax({
         type: "DELETE",
 		url: baseUrl + "/session?sessionId=" + encodeURIComponent(sessID),
@@ -61,7 +77,7 @@ namespace.logout = function(sessID, successFn) {
 			console.log("logout", res);
 			if (successFn) successFn(res);
 		}
-	});	
+	});
 };
 
 namespace.login = function (user, pass, successFn) {
@@ -72,7 +88,7 @@ namespace.login = function (user, pass, successFn) {
 		success: function(res) {
 			console.log("login", res);
 			successFn(res);
-		}      
+		}
 	});
 };
 /*
@@ -90,7 +106,7 @@ function getSessionId(user,pass) {
 	} else {
 		namespace.password = pass;
 	}
-	
+
 	//TODO: Fix to ask for credentials only when needed -perhaps an asynchronus checkSession(sessionID, callbackFunction){...}?
 	console.log("getSessionId calls server with", user,pass);
     var response = $.ajax({
@@ -99,7 +115,7 @@ function getSessionId(user,pass) {
                 "&password=" + encodeURIComponent(pass),
         async: false
     });
-	
+
 	var JSONresponse = JSON.parse(response.responseText);
 	namespace.sessionId = JSONresponse.sessionId;
     return JSONresponse.sessionId;
@@ -116,21 +132,21 @@ function POSTFlatVitalParameter(ehrId) {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	// var flatdata = {
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/diastolic|magnitude":92,
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/diastolic|unit":"mm[Hg]",
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/systolic|magnitude":83,
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/systolic|unit":"mm[Hg]",
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/time":"2017-04-05T" + currentTime + ".178Z",
-		// "vitalparametrar/vitalparametrar/blood_pressure:0/encoding|code":"UTF-8", 
-		// "vitalparametrar/vitalparametrar/blood_pressure:0/encoding|terminology":"IANA_character-sets", 
+		// "vitalparametrar/vitalparametrar/blood_pressure:0/encoding|code":"UTF-8",
+		// "vitalparametrar/vitalparametrar/blood_pressure:0/encoding|terminology":"IANA_character-sets",
 		// "vitalparametrar/vitalparametrar/blood_pressure:0/language|code":"sv" "vitalparametrar/vitalparametrar/blood_pressure:0/language|terminology":"ISO_639-1"
 	// };
-	
+
 	//var flatdata = {"vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/diastolic|magnitude": 91, "vitalparametrar/vitalparametrar/blood_pressure:0/any_event:0/diastolic|unit":"mm[Hg]"};
-	
-	
+
+
 	var queryParams = {
 		"ehrId": ehrId,
 		templateId: 'triage',
@@ -151,13 +167,13 @@ function POSTFlatVitalParameter(ehrId) {
 }
 
 function GetComposition(compid) {
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	//You get the uId from the composition creater/template viewer, recieved internally.
 	$.ajax({
 		url: baseUrl + "/composition/" + compid + "?format=STRUCTURED",
@@ -184,9 +200,9 @@ function listPatients(sessionId, returnCallback) {
 			"Ehr-Session": sessionId
 		}
 	});
-	
+
 	var searchData = [{key: "firstNames", value: "*"}];
-	
+
 	$.ajax({
 		url: baseUrl + "/demographics/party/query",
 		type: 'POST',
@@ -194,15 +210,15 @@ function listPatients(sessionId, returnCallback) {
 		data: JSON.stringify(searchData),
 		success: function (res) {
 			console.log(res);
-			
+
 			for (var i in res.parties) {
-								
+
 				var party = res.parties[i];
 				var flatResultObject = party;
 				var ehrId;
 				var pnum = "yyyymmdd-nnnn";
 				for (var j in party.partyAdditionalInfo) {
-					flatResultObject[(party.partyAdditionalInfo[j].key)] = party.partyAdditionalInfo[j].value; 
+					flatResultObject[(party.partyAdditionalInfo[j].key)] = party.partyAdditionalInfo[j].value;
 					if (party.partyAdditionalInfo[j].key === 'ehrId') {
 						ehrId = party.partyAdditionalInfo[j].value;
 					}
@@ -210,7 +226,7 @@ function listPatients(sessionId, returnCallback) {
 						pnum = party.partyAdditionalInfo[j].value;
 					}
 				}
-				
+
 				var dob = '????-??-??';
 				if (party.dateOfBirth) {
 					dob = party.dateOfBirth.substring(0, 10);
@@ -224,42 +240,44 @@ function listPatients(sessionId, returnCallback) {
 			returnCallback(resultArray);
 			//$('#result').val(res);
 		}
-		
+
 	});
-		
+
 }
 namespace.listPatients = listPatients;
-	
+
 
 //Get patientdata via ajax from EHR API.
-function GetAQLData(ehrId) {
+namespace.queryAQL = function GetAQLData(aql, ehrId, successFn) {
 
-        console.log("Start");
-		
+		console.log("Start GetAQLData");
+		if (ehrId) {
+			aql = aql.replace("$ehrUid","'"+ehrId+"'");
+			console.log("AQL after replace",aql);
+		} else {
+			if (aql.indexOf("$ehrUid") !== -1) throw "AQL contained a $ehrUid variable but no EHR ID was provided";
+		}
+
+
 		$.ajaxSetup({
 			headers: {
 				"Ehr-Session": namespace.sessionId
 			}
 		});
-		
-        var aql = "select bp/data[at0001|history|]/events[at0006|any event|]/Time as Time, " +
-        "bp/data[at0001|history|]/events[at0006|any event|]/data[at0003]/items[at0004|Systolic|]/value as Systolic, " +
-        "bp/data[at0001|history|]/events[at0006|any event|]/data[at0003]/items[at0005|Diastolic|]/value as Diastolic, " +
-        "c_a/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value as Pulse_Rate " +
-        "from EHR e " +
-        "contains COMPOSITION c " +    
-        "contains (OBSERVATION bp[openEHR-EHR-OBSERVATION.blood_pressure.v1] or OBSERVATION c_a[openEHR-EHR-OBSERVATION.pulse.v1])" +
-        "    where " +
-        "    c/archetype_details/template_id/value = 'triage' AND " +
-        " e/ehr_id/value = '" + ehrId + "'" +
-        " ORDER BY bp/data[at0001|history|]/events[at0006|any event|]/Time DESC" +
-        " offset 0 limit 4";
+
 
         $.ajax({
-            url: baseUrl + "/query?" + $.param({ "aql": aql }),
-            type: 'GET',
-            success: function (res) {           
+            url: baseUrl + "/query",
+			type: 'POST',
+			contentType: "application/json",
+			success: successFn,
+			processData: false,
+			data:JSON.stringify({"aql": aql}) //stringify to encode linebreaks etc from aql input form
+			//data: '{"aql":"'+aql+'"}'
 
+			// url: baseUrl + "/query?" + $.param({ "aql":aql }),
+			//            type: 'GET',
+/*
                 try {
 					var party = res.party;
 					data = res.resultSet;
@@ -270,28 +288,28 @@ function GetAQLData(ehrId) {
 					//paintGraf(data);
                 }
                 catch (err) {
+				}
+*/
 
-                }
-            }
         });
-    
-}
+
+};
 
 
 
 function CreatePatient(sessionId, firstname, lastname, gender, dateOfBirth, personnummer, tags) {
 
 	if(!dateOfBirth) dateOfBirth = "1991-12-18T19:30";
-	if(!personnummer && !dateOfBirth) personnummer = "19121212-1212";	
+	if(!personnummer && !dateOfBirth) personnummer = "19121212-1212";
 	if(!personnummer && dateOfBirth) personnummer = dateOfBirth.substring(0,3)+dateOfBirth.substring(5,6)+dateOfBirth.substring(8,9)+"-????";
 	if(!tags) tags = "";
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": sessionId
 		}
 	});
-	
+
 	$.ajax( {
 
     	url: baseUrl + "/ehr",
@@ -299,7 +317,7 @@ function CreatePatient(sessionId, firstname, lastname, gender, dateOfBirth, pers
 
     	success: function (data) {
      	   	var ehrId = data.ehrId;
-			
+
 			$("#header").html("EHR: " + ehrId);
 			console.log("EHRID: " + ehrId);
 
@@ -324,7 +342,7 @@ function CreatePatient(sessionId, firstname, lastname, gender, dateOfBirth, pers
 					}
 				]
 			};
-			
+
         	$.ajax({
         	url: baseUrl + "/demographics/party",
           	type: 'POST',
@@ -344,24 +362,24 @@ namespace.CreatePatient = CreatePatient;
 
 
 function CreateComposition(ehrId) {
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
-	
+
+
 	//e7732b37-e119-4fb1-a44f-b3f4325aa11d
 	//composition for TriageHenrikv2
 	// var compositionData = {"vitalparametrar":{"_uid":["d7fc20eb-a20b-4939-ac19-fee29b4630fb::lio.ehrscape.com::1"],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"territory":[{"|code":"SE","|terminology":"ISO_3166-1"}],"context":[{"start_time":["2017-04-05T"+ currentTime+".178+02:00"],"setting":[{"|code":"238","|value":"other care","|terminology":"openehr"}]}],"vitalparametrar":[{"indirect_oximetry":[{"any_event":[{"spo2":[{"|numerator":57,"|denominator":100,"":0.56}],"time":["2017-04-05T"+currentTime+".178+02:00"]}],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"encoding":[{"|code":"UTF-8","|terminology":"IANA_character-sets"}]}],"pulse_heart_beat":[{"any_event":[{"pulse_rate":[{"|magnitude":61,"|unit":"/min"}],"time":["2017-04-05T"+currentTime+".178+02:00"]}],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"encoding":[{"|code":"UTF-8","|terminology":"IANA_character-sets"}]}],"blood_pressure":[{"any_event":[{"systolic":[{"|magnitude":81,"|unit":"mm[Hg]"}],"diastolic":[{"|magnitude":91,"|unit":"mm[Hg]"}],"time":["2017-04-05T"+currentTime+".178+02:00"]}],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"encoding":[{"|code":"UTF-8","|terminology":"IANA_character-sets"}]}],"body_weight":[{"any_event":[{"weight":[{"|magnitude":97,"|unit":"kg"}],"time":["2017-04-05T"+currentTime+".178+02:00"]}],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"encoding":[{"|code":"UTF-8","|terminology":"IANA_character-sets"}]}]}],"composer":[{"|name":"Carlos.Ortiz@regionostergotland.se"}]}};
-	
-	// var compositionData = 
+
+	// var compositionData =
 	// {"ctx": {"language": "sv","territory": "se","composer_name": "carlos"}, "beslut_om_kirurgisk_åtgärd":{"beställning_av_kirurgisk_åtgärd":[{"_uid":["7ce57adf-fff8-4f1e-bcef-aa1143175715"],"request":[{"planerad_kirurgisk_huvudåtgärd":["KCC10 Cystoprostatovesikulektomi"],"medicinsk_brådskandegrad":["Inom 6 timmar"],"timing":[{"|value":"x","|formalism":"timing"}]}],"narrative":["Beslut om kirurgisk åtgärd ska utföras eller ej"],"language":[{"|code":"sv","|terminology":"ISO_639-1"}],"encoding":[{"|code":"UTF-8","|terminology":"IANA_character-sets"}]}]}};
-	
-	var compositionData = 
+
+	var compositionData =
 	{"beslut_om_kirurgisk_åtgärd":{"context":[{"start_time":[],"setting":[]}],"beställning_av_kirurgisk_åtgärd":[{"request":[{"planerad_kirurgisk_huvudåtgärd":["KCC10 Cystoprostatovesikulektomi"],"medicinsk_brådskandegrad":["Urakut"],"timing":[{"|formalism":"text/html","|value":"Lorem"}],"action_archetype_id":[]}],"requestor_identifier":[],"receiver_identifier":[],"request_status":["Lorem"],"narrative":["Lorem"]}],"status_valmöjlighet":[{"ism_transition":[{"current_state":[{"|code":"526","|value":"planned","|terminology":"local"}],"transition":[],"careflow_step":[{"|code":null,"|value":null,"|terminology":null}]}],"patienten_har_fått_möjlighet_att_välja_behandling":["Ja"],"review_date":[],"time":[]}],"status_samtycke":[{"ism_transition":[{"current_state":[{"|code":"526","|value":"planned","|terminology":"local"}],"transition":[],"careflow_step":[]}],"patienten_samtycker_till_planerad_kirurgisk_åtgärd":["Ja"],"review_date":[],"time":[]}],"status_delaktighet":[{"ism_transition":[{"current_state":[{"|code":"526","|value":"planned","|terminology":"local"}],"transition":[],"careflow_step":[]}],"patienten_är_delaktig_i_beslutet_om_kirurgisk_åtgärd":["Nej"],"review_date":[],"time":[]}],"status_beslut":[{"ism_transition":[{"current_state":[{"|code":"524","|value":"initial","|terminology":"local"}],"transition":[],"careflow_step":[]}],"beslut":["Nej, patienten ska inte opereras"],"motivering_till_beslut":["Lorem"],"time":[]}],"underlag_citat_länkar_relevanta_för_beslutet":[{"citat_länk":[{"citat":[{"|formalism":"","|value":""}],"comment":[""],"description":[""],"länk_uri_till_källdata":[""]}],"citat_länk:1":[{"citat":[{"|formalism":"","|value":""}],"comment":[""],"description":[""],"länk_uri_till_källdata":[""]}],"citat_länk:2":[{"citat":[{"|formalism":"","|value":""}],"comment":[""],"description":[""],"länk_uri_till_källdata":[""]}]}]},"ctx":{"language":"sv","territory":"SE"}};
-	
+
 	var queryParams = {
 		"ehrId": ehrId,
 		templateId: 'Beslut om kirurgi m citations',
@@ -370,7 +388,7 @@ function CreateComposition(ehrId) {
 	};
 
 	$.ajax({
-		url: baseUrl + "/composition?" + $.param(queryParams), 
+		url: baseUrl + "/composition?" + $.param(queryParams),
 		type: 'POST',
 		contentType: 'application/json',
 		data: JSON.stringify(compositionData),
@@ -383,23 +401,23 @@ function CreateComposition(ehrId) {
 
 
 function DeleteComposition(compid) {
-	
+
 	var uid = compid;
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	//e7732b37-e119-4fb1-a44f-b3f4325aa11d
 	//composition for TriageHenrikv2
-	
+
 	var queryParams = {
 		uid: uid
 	};
 
 	$.ajax({
-		url: baseUrl + "/composition/" + uid, //$.param(queryParams), 
+		url: baseUrl + "/composition/" + uid, //$.param(queryParams),
 		type: 'DELETE',
 		contentType: 'application/json',
 		success: function (data) {
@@ -409,23 +427,23 @@ function DeleteComposition(compid) {
 }
 
 function DeleteTemplate(tempid) {
-	
-	var tempid = "samling_beslut";
+
+	//var tempid = "samling_beslut";
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	//e7732b37-e119-4fb1-a44f-b3f4325aa11d
 	//composition for TriageHenrikv2
-	
+
 	var queryParams = {
 		templateId: tempid
 	};
 
 	$.ajax({
-		url: baseUrl + "/template/" + tempid, //$.param(queryParams), 
+		url: baseUrl + "/template/" + tempid, //$.param(queryParams),
 		type: 'DELETE',
 		contentType: 'application/json',
 		success: function (data) {
@@ -436,14 +454,14 @@ function DeleteTemplate(tempid) {
 
 
 function GetPatientByEHR(sessionId, ehrId) {
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": sessionId
 		}
 	});
-	
-	
+
+
 	$.ajax({
 		url: baseUrl + "/demographics/ehr/" + ehrId + "/party",
 		type: 'GET',
@@ -460,13 +478,13 @@ namespace.getPatientByEHRID = GetPatientByEHR;
 
 
 function GetPatientByName(sessionId, firstname, lastname) {
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": sessionId
 		}
 	});
-	
+
 	var searchData = [
 		{key: "firstNames", value: firstname},
 		{key: "lastNames", value: lastname}
@@ -488,7 +506,7 @@ function GetPatientByName(sessionId, firstname, lastname) {
 						break;
 					}
 				}
-				
+
 				$("#result").html(party.firstNames + ' ' + party.lastNames +
 					' (ehrId = ' + ehrId + ')<br>');
 			}
@@ -497,23 +515,23 @@ function GetPatientByName(sessionId, firstname, lastname) {
 }
 
 function GetVitalParameter(sessionId, ehrId) {
-	
+
 	$.ajaxSetup({
 		headers: {
 			"Ehr-Session": sessionId
 		}
 	});
-	
+
 	$.ajax({
 		url: baseUrl + "/view/"+ ehrId + "/blood_pressure",
 		type: 'GET',
 		contentType: 'application/json',
-		
+
 		success: function(res) {
 			console.log(res);
 		}
 	});
-	
+
 }
 
 function GetTemplate() {
@@ -522,12 +540,12 @@ function GetTemplate() {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	$.ajax({
 		url: baseUrl + "/template/Beslut om kirurgi"  ,
 		type: 'GET',
 		contentType: 'application/json',
-		
+
 		success: function(res) {
 			var obj = {};
 			obj = res;
@@ -539,18 +557,18 @@ function GetTemplate() {
 }
 
 function getForm(ehrId, name, version, callbackFn) {
-	
+
     $.ajaxSetup({
 		headers: {
 			"Ehr-Session": namespace.sessionId
 		}
 	});
-	
+
 	$.ajax({
 		url: baseUrl + "/form/" + name + "/" + version + '?resources=SOURCE',
 		type: 'GET',
 		contentType: 'application/json',
-		
+
 		success: function(res) {
 			// var obj = {};
 			// obj.form = res.forms[26]
@@ -565,17 +583,17 @@ function getForm(ehrId, name, version, callbackFn) {
 namespace.getForm = getForm;
 
 function listForms(sessionID, callback){
-	
+
     $.ajaxSetup({
 		headers: {
 			"Ehr-Session": sessionID
 		}
 	});
-	
+
 	$.ajax({
 		url: baseUrl + "/form/",
 		type: 'GET',
-		contentType: 'application/json',	
+		contentType: 'application/json',
 		success: function(res) {
 			//console.log(res);
 			callback(res.forms);
@@ -595,7 +613,7 @@ namespace.listForms = listForms;
 
 	// return this.formModel;
 // }
-		
+
 // function initRenderer(formObject) {
 	// var _this2 = this;
 
@@ -638,16 +656,12 @@ namespace.listForms = listForms;
 // }
 
 // function drawForm () {
-	
-// }
 
+// }
+console.log("program.js document ready function finished");
 }); // end of document ready
 
-// **********************************
-/*
-*/
-// **********************************
-
+console.log("program.js loaded");
 
 
 
