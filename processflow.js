@@ -46,7 +46,7 @@ function initialize(selectorString, width, height) {
 
 // Generate a string that describes the points of a breadcrumb polygon.
 function breadcrumbPoints(d, i) {
-  console.log("breadcrumbPoints",d,i)
+  console.log("breadcrumbPoints",d,i);
   var points = [];
   points.push("0,0");
   points.push(b.w + ",0");
@@ -115,7 +115,7 @@ function update(nodeArray, percentageString) {
 
   // Make the breadcrumb trail visible, if it's hidden.
   d3.select("#trail")
-      .style("visibility", ".");
+      .style("visibility", "");
 
 }
 

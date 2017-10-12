@@ -11,26 +11,72 @@
   <body>
     <div id="main">
       <div id="sequence"></div>
-      <div id="chart">
+          <label for="flowExample">Pick an example</label>
+          <select id="flowExample" class="form-control" onchange="flowExampleChanged()"><br/>
+              <option value="0">remissflöde 1</option><option value="1">ultraljud</option><option value="2">biopsi</option><option value="3">remissflöde 3</option>
+          </select>
+          <textarea id="flowExampleField" rows="5" cols="190" class="form-control"  placeholder="Paste flow here or pick from example list above..." ></textarea><br/>				
+          <button id="flowButton" class="btn btn-primary btn-block"  onclick="flowButton()" value="visualize">visualize</button>
+<br/>
+        <hr>
+      <div id="screenshot">
+        <img src="surgical_referral_flow.png" alt="">
       </div>
     </div>
     <script type="text/javascript" src="processflow.js"></script>
     <script type="text/javascript">
+
+    function flowExampleChanged() {
+      var x = document.getElementById("flowExample").value;
+      document.getElementById("flowExampleField").value = JSON.stringify(exampleFlows[x]);
+      console.log("flowExampleChanged", x);
+    };
+
+    function flowButton() {
+      console.log("flowExampleFieldChanged",document.getElementById("flowExampleField").value);
+      update(JSON.parse(document.getElementById("flowExampleField").value),"");
+    };
+
     // initializeBreadcrumbTrail(selectorString, width, height)
     // initializeBreadcrumbTrail("#sequence", 1000, 150);
 
-    initialize("#sequence", 1000, 150);
-    update(
-    [
-        {name:"Remiss mottagen",        state:"planned",    date:"2017-02-10",  link:"010"},        
-        {name:"Remiss vidarebefordrad", state:"planned",    date:"2017-02-12",  link:"020"},
-        {name:"Remiss accepterad",      state:"scheduled",  date:"2017-02-15",  link:"030"},    
-        {name:"Utredning och beslut",   state:"active",     date:"2017-02-24",  link:"040"},
-        {name:"Patientvald väntan",     state:"suspended",  date:"2017-03-02",  link:"050"},
-        {name:"Utredning och beslut",   state:"active",     date:"2017-03-22",  link:"060"},
-        {name:"Remiss-svar skickat",    state:"completed",  date:"2017-03-29",  link:"070"} 
-    ], 
-    ".");
+    // Using \u00A0 non breaking space to avoid row split on first space
+    var exampleFlows = [
+      [
+          {name:"Remiss mottagen",        state:"planned",    date:"2017-02-10",  link:"010"},        
+          {name:"Remiss vidarebefordrad", state:"planned",    date:"2017-02-12",  link:"020"},
+          {name:"Remiss accepterad",      state:"scheduled",  date:"2017-02-15",  link:"030"},    
+          {name:"Utredning och beslut",   state:"active",     date:"2017-02-24",  link:"040"},
+          {name:"Patientvald väntan",     state:"suspended",  date:"2017-03-02",  link:"050"},
+          {name:"Utredning och beslut",   state:"active",     date:"2017-03-22",  link:"060"},
+      ], 
+      [
+          {name:"Ulraljud beställt",        state:"planned",    date:"2017-02-10",  link:"110"},        
+          {name:"Ulraljud inbokat",      state:"scheduled",  date:"2017-02-15",  link:"120"},
+          {name:"Patientvald avbokning", state:"planned",    date:"2017-02-17",  link:"130"},    
+          {name:"Ulraljud inbokat",      state:"scheduled",  date:"2017-02-20",  link:"140"},
+          {name:"Ulraljud genomfört",   state:"active",     date:"2017-02-24",  link:"150"},
+          {name:"Svar skickat",    state:"completed",  date:"2017-02-25",  link:"160"} 
+      ],
+      [
+          {name:"Biopsi beställd",        state:"planned",    date:"2017-03-22",  link:"210"},        
+          {name:"Biopsi inbokad",      state:"scheduled",  date:"2017-03-28",  link:"230"},
+      ], 
+      [
+        {name:"Remiss mottagen",        state:"planned",    date:"2017-02-10",  link:"310"},        
+        {name:"Remiss\u00A0bedömd som ofullständig", state:"postponed",    date:"2017-02-12",  link:"320"},
+        {name:"Remiss mottagen",        state:"planned",    date:"2017-02-16",  link:"325"},        
+        {name:"Remiss accepterad",      state:"scheduled",  date:"2017-02-18",  link:"330"},    
+        {name:"Utredning och beslut",   state:"active",     date:"2017-02-24",  link:"340"},
+        {name:"Operations- planering",     state:"active",  date:"2017-03-02",  link:"350"},
+        {name:"Strykning",   state:"suspended",     date:"2017-03-22",  link:"360"},
+        {name:"Operations- planering",     state:"active",  date:"2017-03-23",  link:"370"},
+        {name:"Kirurgi påbörjad",     state:"active",  date:"2017-04-12",  link:"380"}, 
+      ]
+    ];
+    initialize("#sequence", 1500, 150);
+    document.getElementById("flowExampleField").value = JSON.stringify(exampleFlows[0]);
+    update(exampleFlows[0],"");
 
   </script> 
   </body>
