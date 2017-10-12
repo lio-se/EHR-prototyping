@@ -29,17 +29,29 @@ var queryMap = {
 var csvMap = {
     
 
-"VP temp Vladimir Dalton 41":
+"VP temp Vladimir Dalton 41C":
+{   remote: false,
+    templateId: "Vital Signs",
+    templateLanguage: "en",
+    csv:
 "ehrId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
-"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SI,41.3,°C",
+"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SE,41.3,°C"},
 
-"VP temp Vladimir Dalton 37":
+"VP temp Vladimir Dalton 37C":
+{   remote: false,
+    templateId: "Vital Signs",
+    templateLanguage: "en",
+    csv:
 "ehrId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
-"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SI,37.1,°C",
+"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SE,37.1,°C"},
 
 "VP temp":
+{   remote: false,
+    templateId: "Vital Signs",
+    templateLanguage: "en",
+    csv:
     "subjectId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
-"1001,en,SI,37.1,°C"
+"1001,en,SI,37.1,°C"}
 
 };
 

@@ -140,13 +140,7 @@
 						<div class="form-group"><label>Composer name</label><input type="text" id="composer" value="Dr. T. Esting" class="form-control"></div>
 						<div class="form-group"><label>Comitter name</label><input type="text" id="committer" value="Dr. T. Esting" class="form-control"></div>						
 						<div class="form-group"><label>Subject (patient) namesapce</label><input type="text" id="committer" value="lio.se" class="form-control"></div>												
-						<div class="form-group">
-							<label>Selected Form</label>
-							<input id="form-id-field" type="text"  size="35" placeholder="Form ID goes here, e.g. from select-button in 'List forms' below" class="form-control">
-							<input id="form-version-field" type="text" size="5" placeholder="version" class="form-control"></div>
-							<input class="btn btn-primary" type="button" id="open-form-button-ro" value="open selected form for EHR in RÖ renderer">
-							<input class="btn btn-primary" type="button" id="open-form-button-2" value="open selected form for EHR in renderer 2">						
-						</form>
+
 				</div>
 
 		</div>
@@ -238,9 +232,21 @@
 		</table>
 		<div id="patientlist"></div>
 	</div></div>
+
+
 	<div class="row" id="listForms"><div class="col-sm-12">
 			<h2>List Forms</h2>
-			<input type="button" class="btn btn-primary" id="listFormsButton" value="List forms">
+			<form class="form-inline">
+			<input type="button" class="btn btn-primary" id="listFormsButton" value="List forms"><br/>
+			<div class="form-group">
+				<label>Selected Form</label>
+				<input id="form-id-field" type="text"  size="35" placeholder="Form ID goes here, e.g. from select-button in 'List forms' below" class="form-control">
+				<label>Version</label>
+				<input id="form-version-field" type="text" size="5" placeholder="version" class="form-control">
+				<input class="btn btn-primary" type="button" id="open-form-button-ro" value="open in RÖ renderer">
+				<input class="btn btn-primary" type="button" id="open-form-button-2" value="open in debug/path renderer below"><br/>
+			</div>						
+			</form>
 			<table class="table table-condensed table-hover sortable" id="formTable" >
 					<thead>
 						<th>Name</th><th>Version</th><th>Template Id</th>
@@ -250,7 +256,7 @@
 					<tbody>
 					</tbody>
 			</table>
-			<div id="formList"></div>
+			<div id="formRenderSlot"></div>
 		</div></div>
 	<div class="row">
 <h3 id="header">Result:</h3>
@@ -353,11 +359,24 @@ var csvOptionList = "";
 	}
 	$(csvOptionList).insertAfter("#noImportExampleChosen");
 
-	$("#importExample").change(
+	/*$("#importExample").change(
 		function() {
 			var queryName = $("#importExample").val();
 			if (queryName) {
 				document.getElementById("CSVimportField").value = csvMap[queryName]
+			}
+		}
+	);*/
+
+	$("#importExample").change(
+		function() {
+			var queryName = $("#importExample").val();
+			if (queryName) {
+				var cMap = csvMap[queryName];
+				console.log("#importExample.change",csvMap,cMap.csv);
+				document.getElementById("CSVimportField").value = cMap.csv;
+				document.getElementById("templateId").value = cMap.templateId;
+				document.getElementById("templateLanguage").value = cMap.templateLanguage;
 			}
 		}
 	);
@@ -553,12 +572,49 @@ var csvOptionList = "";
   		win.focus();
 	});
 
+	function childLoop(childArray, incomingOut){
+		for (var index2 = 0; index2 < childArray.length; index2++) {
+			var child = childArray[index2];
+			var ou = ou + "<li><strong>"+child.name+"</strong> <code>formId</code> "+child.formId+"  <small><code>aqlPath</code> "+child.aqlPath+"</small></li>" 
+			//loop over inputs here
+			var inputArray = child.inputs;
+			//console.log("Child loop - has inputs",child,inputArray);
+			if (inputArray) {
+				ou = ou+ "<ul>"
+				for (var index3 = 0; index3 < inputArray.length; index3++) {
+					var inp = inputArray[index3];
+					ou = ou + "<li>";
+					if (inp.suffix) ou = ou + "<code>suffix</code> "+inp.suffix;
+					if (inp.list) ou = ou + "<br/><small><code>list</code> "+JSON.stringify(inp.list)+"</small>";
+					ou = ou+"</li>";
+				}
+			ou = ou + "</ul>"
+			}
+			if (child.children) {
+				ou = ou + "<li><ul>"+ childLoop(child.children, ou)+"</ul></li>";
+			}
+		}
+		return ou;
+	}
+
+
 	$("#open-form-button-2").click(function() {		
 		//EHRhelper.getForm(ehrId, name, version, callbackFn)
 		EHRhelper.getForm(document.getElementById("ehr-id-field").value.trim(), 
 			document.getElementById("form-id-field").value.trim(), 
 			document.getElementById("form-version-field").value.trim(), 
-			null)
+			function(res){
+				var array = res.form.resources;
+				var out = "<ul>";
+				for (var index = 0; index < array.length; index++) {
+					var element = array[index];
+					if (element.name == "form-description"){
+						out = out + "<li><ul>"+childLoop(element.content.children)+"</ul></li>"
+					}
+				}
+				out = out+ "</ul>";
+				document.getElementById("formRenderSlot").innerHTML = out;
+			})
 	});
 
 	console.log("End of html inline script");
