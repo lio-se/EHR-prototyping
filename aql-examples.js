@@ -1,4 +1,3 @@
-
 var queryMap = {
 
     "BP+Pulse" :
@@ -25,6 +24,22 @@ var queryMap = {
 "Empty query":
 ""
 
+};
+
+var csvMap = {
+    
+
+"VP temp Vladimir Dalton 41":
+"ehrId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
+"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SI,41.3,°C",
+
+"VP temp Vladimir Dalton 37":
+"ehrId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
+"b51f3709-eeb6-49ed-afae-ef1468ec03fb,en,SI,37.1,°C",
+
+"VP temp":
+    "subjectId,ctx/language,ctx/territory,vital_signs/body_temperature:0/any_event:0/temperature|magnitude,vital_signs/body_temperature:0/any_event:0/temperature|unit\n"+
+"1001,en,SI,37.1,°C"
 
 };
 

@@ -273,29 +273,33 @@ namespace.queryAQL = function GetAQLData(aql, ehrId, successFn) {
 			success: successFn,
 			processData: false,
 			data:JSON.stringify({"aql": aql}) //stringify to encode linebreaks etc from aql input form
-			//data: '{"aql":"'+aql+'"}'
-
-			// url: baseUrl + "/query?" + $.param({ "aql":aql }),
-			//            type: 'GET',
-/*
-                try {
-					var party = res.party;
-					data = res.resultSet;
-					console.log("ajax success");
-					JSONS = JSON.stringify(data, undefined, 2);
-					console.log(JSONS);
-					$('#result').val(JSONS);
-					//paintGraf(data);
-                }
-                catch (err) {
-				}
-*/
-
         });
 
 };
 
-
+//Post bulk patientdata via ajax to EHR API.
+namespace.importCSV =function (csv, templateId, templateLanguage, successFn) {
+	
+			console.log("Start importCSV", csv, templateId, templateLanguage);
+	
+			$.ajaxSetup({
+				headers: {
+					"Ehr-Session": namespace.sessionId
+				}
+			});
+	
+	
+			$.ajax({
+				//https://rest.ehrscape.com/rest/v1/import/csv?templateId=Vital+Signs&templateLanguage=en&subjectNamespace=lio.se
+				url: baseUrl + "/import/csv?templateId="+encodeURIComponent(templateId)+"&templateLanguage="+encodeURIComponent(templateLanguage)+"&subjectNamespace="+encodeURIComponent("lio.se"),
+				type: 'POST',
+				contentType: "application/octet-stream",
+				success: successFn,
+				processData: false,
+				data: csv
+			});
+	
+	};
 
 function CreatePatient(sessionId, firstname, lastname, gender, dateOfBirth, personnummer, tags) {
 
